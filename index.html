@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Meme Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎭 Meme Generator</h1>
+            <p>Get random memes instantly</p>
+        </header>
+
+        <main>
+            <div class="meme-card">
+                <img id="memeImage" src="" alt="Random Meme" class="meme-image">
+                <p id="memeTitle" class="meme-title"></p>
+            </div>
+
+            <div class="button-group">
+                <button id="nextBtn" class="btn btn-primary">Next Meme →</button>
+                <button id="downloadBtn" class="btn btn-secondary">Download</button>
+            </div>
+
+            <div class="loading" id="loading">Loading meme...</div>
+        </main>
+
+        <footer>
+            <p>Powered by <a href="https://api.api-ninjas.com/v1/meme" target="_blank">Meme API</a></p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
