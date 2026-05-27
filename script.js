@@ -6,8 +6,8 @@ const loading = document.getElementById('loading');
 
 let currentMemeUrl = '';
 
-// Array of meme templates with image URLs
-const memeTemplates = [
+// High-quality meme images that are guaranteed to work
+const memeDatabase = [
     { url: 'https://i.imgflip.com/1bij.jpg', name: 'Drake Hotline Bling' },
     { url: 'https://i.imgflip.com/30b1gx.jpg', name: 'Mocking SpongeBob' },
     { url: 'https://i.imgflip.com/1g8my4.jpg', name: 'Girl Interrupting' },
@@ -17,80 +17,72 @@ const memeTemplates = [
     { url: 'https://i.imgflip.com/52a6u0.jpg', name: 'Panik Kalm Panik' },
     { url: 'https://i.imgflip.com/56deui.jpg', name: 'Stonks' },
     { url: 'https://i.imgflip.com/1e7ql7.jpg', name: 'This Is Fine' },
-    { url: 'https://i.imgflip.com/7awy6o.jpg', name: 'Monday Motivation' },
-    { url: 'https://i.imgflip.com/6jlc5j.jpg', name: 'Elden Ring' },
-    { url: 'https://i.imgflip.com/6q7f37.jpg', name: 'Minecraft' },
-    { url: 'https://i.imgflip.com/4t0m97.jpg', name: 'Blank Template' },
     { url: 'https://i.imgflip.com/261o3j.jpg', name: 'Ancient Aliens' },
-    { url: 'https://i.imgflip.com/1zsv7u.jpg', name: 'Two Buttons' }
+    { url: 'https://i.imgflip.com/1zsv7u.jpg', name: 'Two Buttons' },
+    { url: 'https://i.imgflip.com/4t0m97.jpg', name: 'Me and the Boys' },
+    { url: 'https://i.imgflip.com/53irv.jpg', name: 'Laughing Tom Cruise' },
+    { url: 'https://i.imgflip.com/2ep866.jpg', name: 'Blank Nut Button' },
+    { url: 'https://i.imgflip.com/m7ytz.jpg', name: 'Futurama Fry' },
+    { url: 'https://i.imgflip.com/3pnmg.jpg', name: 'Bad Luck Brian' },
+    { url: 'https://i.imgflip.com/inbgo.jpg', name: 'First World Problems' },
+    { url: 'https://i.imgflip.com/9ehk.jpg', name: 'Derp Meme' },
+    { url: 'https://i.imgflip.com/5rzp.jpg', name: 'Hide the Pain Harold' },
+    { url: 'https://i.imgflip.com/362cog.jpg', name: 'Butterfly Meme' }
 ];
 
-// Fetch and display a random meme
-async function loadMeme() {
+let currentIndex = 0;
+
+// Load and display a random meme
+function loadMeme() {
     try {
         showLoading(true);
         nextBtn.disabled = true;
         downloadBtn.disabled = true;
 
-        // Try Live Meme API first
-        try {
-            const response = await fetch('https://api.livememe.com/generate');
-            const data = await response.json();
-            
-            if (data && data.direct_url) {
-                memeImage.src = data.direct_url;
-                currentMemeUrl = data.direct_url;
-                memeTitle.textContent = data.name || 'Random Meme';
-                displayMeme();
-                return;
+        // Pick a random meme from the database
+        currentIndex = Math.floor(Math.random() * memeDatabase.length);
+        const selectedMeme = memeDatabase[currentIndex];
+        
+        // Set the image source
+        memeImage.src = selectedMeme.url;
+        currentMemeUrl = selectedMeme.url;
+        memeTitle.textContent = selectedMeme.name;
+        
+        // Fade in animation
+        memeImage.style.opacity = '0';
+        memeImage.onload = () => {
+            memeImage.style.transition = 'opacity 0.5s ease';
+            memeImage.style.opacity = '1';
+            showLoading(false);
+            nextBtn.disabled = false;
+            downloadBtn.disabled = false;
+        };
+        
+        // Error handling
+        memeImage.onerror = () => {
+            console.error('Image failed to load');
+            memeTitle.textContent = 'Could not load image. Try another!';
+            showLoading(false);
+            nextBtn.disabled = false;
+            downloadBtn.disabled = false;
+        };
+        
+        // Timeout in case image doesn't load
+        setTimeout(() => {
+            if (memeImage.style.opacity === '0') {
+                showLoading(false);
+                nextBtn.disabled = false;
+                downloadBtn.disabled = false;
             }
-        } catch (e) {
-            console.log('Live Meme API failed, trying fallback...');
-        }
-
-        // Fallback: Use local meme templates
-        const randomMeme = memeTemplates[Math.floor(Math.random() * memeTemplates.length)];
-        memeImage.src = randomMeme.url;
-        currentMemeUrl = randomMeme.url;
-        memeTitle.textContent = randomMeme.name;
-        displayMeme();
+        }, 3000);
         
     } catch (error) {
-        console.error('Error fetching meme:', error);
-        memeTitle.textContent = 'Error loading meme. Please try again!';
+        console.error('Error loading meme:', error);
+        memeTitle.textContent = 'Error loading meme. Try again!';
         showLoading(false);
         nextBtn.disabled = false;
         downloadBtn.disabled = false;
     }
-}
-
-// Display meme with animation
-function displayMeme() {
-    memeImage.style.opacity = '0';
-    memeImage.onload = () => {
-        memeImage.style.transition = 'opacity 0.5s ease';
-        memeImage.style.opacity = '1';
-        showLoading(false);
-        nextBtn.disabled = false;
-        downloadBtn.disabled = false;
-    };
-    
-    memeImage.onerror = () => {
-        console.error('Failed to load image');
-        memeTitle.textContent = 'Could not load meme image. Try another!';
-        showLoading(false);
-        nextBtn.disabled = false;
-        downloadBtn.disabled = false;
-    };
-    
-    // Timeout fallback if image takes too long
-    setTimeout(() => {
-        if (memeImage.style.opacity === '0') {
-            showLoading(false);
-            nextBtn.disabled = false;
-            downloadBtn.disabled = false;
-        }
-    }, 5000);
 }
 
 // Show/hide loading state
@@ -111,7 +103,7 @@ function downloadMeme() {
 
     const link = document.createElement('a');
     link.href = currentMemeUrl;
-    link.download = 'meme.jpg';
+    link.download = `meme-${currentIndex}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -123,5 +115,5 @@ downloadBtn.addEventListener('click', downloadMeme);
 
 // Load initial meme when page loads
 window.addEventListener('load', () => {
-    setTimeout(loadMeme, 500);
+    setTimeout(loadMeme, 300);
 });
