@@ -4,7 +4,13 @@ const nextBtn = document.getElementById('nextBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const loading = document.getElementById('loading');
 
-const API_URL = 'https://api.api-ninjas.com/v1/meme';
+// Multiple meme APIs to try
+const MEME_APIS = [
+    'https://api.imgflip.com/get_memes',
+    'https://meme-api.com/gimme'
+];
+
+let currentMemeUrl = '';
 
 // Fetch and display a random meme
 async function loadMeme() {
@@ -13,20 +19,48 @@ async function loadMeme() {
         nextBtn.disabled = true;
         downloadBtn.disabled = true;
 
-        const response = await fetch(API_URL);
-        const data = await response.json();
-
-        if (data && data.image) {
-            memeImage.src = data.image;
-            memeTitle.textContent = data.text || 'Random Meme';
-            memeImage.style.opacity = '0';
-            memeImage.onload = () => {
-                memeImage.style.transition = 'opacity 0.5s ease';
-                memeImage.style.opacity = '1';
-            };
-        } else {
-            memeTitle.textContent = 'Error loading meme. Try again!';
+        // Try imgflip API first
+        try {
+            const response = await fetch('https://api.imgflip.com/get_memes');
+            const data = await response.json();
+            
+            if (data.success && data.data.memes.length > 0) {
+                const randomMeme = data.data.memes[Math.floor(Math.random() * data.data.memes.length)];
+                memeImage.src = randomMeme.url;
+                currentMemeUrl = randomMeme.url;
+                memeTitle.textContent = randomMeme.name || 'Random Meme';
+                memeImage.style.opacity = '0';
+                memeImage.onload = () => {
+                    memeImage.style.transition = 'opacity 0.5s ease';
+                    memeImage.style.opacity = '1';
+                };
+                return;
+            }
+        } catch (e) {
+            console.log('imgflip API failed, trying fallback...');
         }
+
+        // Fallback: Use meme-api.com
+        try {
+            const response = await fetch('https://meme-api.com/gimme');
+            const data = await response.json();
+            
+            if (data.url) {
+                memeImage.src = data.url;
+                currentMemeUrl = data.url;
+                memeTitle.textContent = data.title || 'Random Meme';
+                memeImage.style.opacity = '0';
+                memeImage.onload = () => {
+                    memeImage.style.transition = 'opacity 0.5s ease';
+                    memeImage.style.opacity = '1';
+                };
+                return;
+            }
+        } catch (e) {
+            console.log('meme-api.com failed');
+        }
+
+        memeTitle.textContent = 'Error loading meme. Please try again!';
     } catch (error) {
         console.error('Error fetching meme:', error);
         memeTitle.textContent = 'Failed to load meme. Please try again!';
@@ -48,10 +82,10 @@ function showLoading(isLoading) {
 
 // Download meme
 function downloadMeme() {
-    if (!memeImage.src) return;
+    if (!currentMemeUrl) return;
 
     const link = document.createElement('a');
-    link.href = memeImage.src;
+    link.href = currentMemeUrl;
     link.download = 'meme.jpg';
     document.body.appendChild(link);
     link.click();
