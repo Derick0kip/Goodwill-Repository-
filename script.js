@@ -4,67 +4,53 @@ const nextBtn = document.getElementById('nextBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const loading = document.getElementById('loading');
 
-// Multiple meme APIs to try
-const MEME_APIS = [
-    'https://api.imgflip.com/get_memes',
-    'https://meme-api.com/gimme'
-];
-
 let currentMemeUrl = '';
 
-// Fetch and display a random meme
+// Fetch random memes from Reddit
 async function loadMeme() {
     try {
         showLoading(true);
         nextBtn.disabled = true;
         downloadBtn.disabled = true;
 
-        // Try imgflip API first
-        try {
-            const response = await fetch('https://api.imgflip.com/get_memes');
-            const data = await response.json();
+        // Fetch from Reddit meme subreddits
+        const subreddits = ['memes', 'funny', 'wholesomememes'];
+        const randomSubreddit = subreddits[Math.floor(Math.random() * subreddits.length)];
+        
+        const response = await fetch(`https://www.reddit.com/r/${randomSubreddit}/random/.json`);
+        const data = await response.json();
+        
+        if (data && data[0] && data[0].data && data[0].data.children.length > 0) {
+            const post = data[0].data.children[0].data;
             
-            if (data.success && data.data.memes.length > 0) {
-                const randomMeme = data.data.memes[Math.floor(Math.random() * data.data.memes.length)];
-                memeImage.src = randomMeme.url;
-                currentMemeUrl = randomMeme.url;
-                memeTitle.textContent = randomMeme.name || 'Random Meme';
+            if (post.url && (post.url.includes('.jpg') || post.url.includes('.png') || post.url.includes('.gif'))) {
+                memeImage.src = post.url;
+                currentMemeUrl = post.url;
+                memeTitle.textContent = post.title || 'Random Meme';
+                
                 memeImage.style.opacity = '0';
                 memeImage.onload = () => {
                     memeImage.style.transition = 'opacity 0.5s ease';
                     memeImage.style.opacity = '1';
                 };
-                return;
-            }
-        } catch (e) {
-            console.log('imgflip API failed, trying fallback...');
-        }
-
-        // Fallback: Use meme-api.com
-        try {
-            const response = await fetch('https://meme-api.com/gimme');
-            const data = await response.json();
-            
-            if (data.url) {
-                memeImage.src = data.url;
-                currentMemeUrl = data.url;
-                memeTitle.textContent = data.title || 'Random Meme';
-                memeImage.style.opacity = '0';
-                memeImage.onload = () => {
-                    memeImage.style.transition = 'opacity 0.5s ease';
-                    memeImage.style.opacity = '1';
+                memeImage.onerror = () => {
+                    memeTitle.textContent = 'Could not load image. Try another meme!';
+                    showLoading(false);
+                    nextBtn.disabled = false;
+                    downloadBtn.disabled = false;
                 };
                 return;
             }
-        } catch (e) {
-            console.log('meme-api.com failed');
         }
-
-        memeTitle.textContent = 'Error loading meme. Please try again!';
+        
+        memeTitle.textContent = 'Could not load meme. Try again!';
+        showLoading(false);
+        nextBtn.disabled = false;
+        downloadBtn.disabled = false;
+        
     } catch (error) {
         console.error('Error fetching meme:', error);
-        memeTitle.textContent = 'Failed to load meme. Please try again!';
-    } finally {
+        memeTitle.textContent = 'Error loading meme. Please try again!';
         showLoading(false);
         nextBtn.disabled = false;
         downloadBtn.disabled = false;
@@ -82,7 +68,10 @@ function showLoading(isLoading) {
 
 // Download meme
 function downloadMeme() {
-    if (!currentMemeUrl) return;
+    if (!currentMemeUrl) {
+        alert('No meme loaded yet!');
+        return;
+    }
 
     const link = document.createElement('a');
     link.href = currentMemeUrl;
@@ -96,5 +85,7 @@ function downloadMeme() {
 nextBtn.addEventListener('click', loadMeme);
 downloadBtn.addEventListener('click', downloadMeme);
 
-// Load initial meme
-window.addEventListener('load', loadMeme);
+// Load initial meme when page loads
+window.addEventListener('load', () => {
+    setTimeout(loadMeme, 500);
+});
